@@ -1,0 +1,54 @@
+version: '3.9'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:2.11-1.1.1
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 10.10.1.40
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: "topic-test:1:1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  mongodb: 
+    build: ./mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+    - ./data:/data/db
+
+  gateway-service: 
+    build: ./gateway-service
+    restart: unless-stopped
+    ports: 
+      - 3000:3000
+    depends_on:
+      - mongodb
+  students-service: 
+    build: ./students-service
+    restart: unless-stopped
+    expose: ["9000"]
+    depends_on:
+    - mongodb
+    - kafka
+  class-service: 
+    build: ./class-service
+    restart: unless-stopped
+    expose: ["8001"]
+    depends_on:
+    - mongodb
+    - kafka
+networks:
+    default: 
+      name: microservice 

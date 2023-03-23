@@ -1,0 +1,10 @@
+services:
+  gateway: 
+    build: .
+    restart: always
+    container_name: nodejs-gateway
+    ports:
+      - 3000:3000
+    environment:
+      DB_URL: mongodb://mongoDB://db/test
+   
